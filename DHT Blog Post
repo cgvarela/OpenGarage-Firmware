@@ -1,0 +1,77 @@
+Ray and his contributors have come up with many great products and have been kind enough to provide them to others as open source. I have limited knowledge and experience with Arduino and with esp8266 and I decided to build my own opengarage as a learning experience.
+I decided to use the Wemos d1 mini esp8266 breakout board because of its online support, its built in USB to serial chip for programming the Wemos, its 3.3v regulator and because of the shields available for it which further simplified adding relays and other peripherals.
+My goal was to get the opengarage firmware working on the Wemos and to also add a dht22 temperature and humidity sensor. I decided to document my experience in case others are interested in doing something similar and would appreciate some tips as to what I did and what problems I encountered.
+Below is the bill of materials for the parts I decided to use, I sourced them from Aliexpess.com
+
+BOM
+• Wemos D1 mini
+• US-100 ultrasonic sensor
+• Wemos D1 mini relay shield
+• DHT22
+• Generic pushbutton
+• Generic piezo buzzer
+
+Software
+• Most recent Arduino ide Arduino.cc
+• Boards file for Wemos D1 mini (esp8266)
+o In the Arduino IDE go to File | Preferences | Additional Boards Manager URLS: and paste in (http://arduino.esp8266.com/stable/package_esp8266com_index.json)
+o Then go to Tools | Board | Board Manager and search for esp8266, ***MAKE SURE TO SELECT VERSION 2.2.0 and not 2.3.0***
+• Esp8266 library
+o In Arduino IDE go to Sketch | Include Library | Manage Libraries and search for esp8266.
+• Blynk library
+o Same process as getting the esp8266 library
+• Adafruit DHT library
+o Same process as getting the esp8266 library
+• Simpletimer library
+o Same process as getting the esp8266 library
+• Open garage library opengarage github
+o Download OpenGarage-Firmware-master.zip and unzip the file
+o Now go into the folder you just unzipped and make a zip file of just the OpenGarage folder.
+o Go back to the Arduino IDE and click on Sketch | Include Library | Add .zip Library and chose the OpenGarage.zip file just created.
+• Nodemcu firmware flasher nodemcu
+
+Observations / issues I came across
+• Make sure to pick esp8266 version 2.2.0 when selecting boards file. When I selected the newest version 2.3.0 I got async error. Downgrading to version 2.2.0 fixed the problem.
+• When testing the Wemos D1 mini on a breadboard make sure to either have an ultrasonic sensor connected or the board will go into a continuous reboot because the watchdog is looking for a distance sensor.
+• If you decide to us the US-100 ultrasonic sensor, there is a jumper on the back of the board, make sure to remove the jumper or else the sensor will not work with opengarage.
+• When using a DHT22 sensor either make sure to get one on a breakout board or put in a 4.7k resistor between the data and vcc pins
+
+Modifications to Arduino software required by opengarage
+• Go to the open garage master firmware folder downloaded from github and then go to the Modifcations folder.
+o Copy BlynkSimpleEsp8266.h and paste it into Documents | Arduino | libraries | blynk-library-0.4.2 | src
+o Also, copy Updater.h and paste it into C: |Users | (name of your computer user) | AppData | Local | Arduino15 | packages | esp8266 | hardware | esp8266 | 2.2.2 | cores
+
+Adding the DHT senor and library
+• I used Notepad ++ to make changes to the firmware easier: Notepad++
+• On your computer go to documents | Arduino | libraries | Open garage and open defines.h with notepad ++
+o You will want to pick a free pin to use on your Wemos D1 mini for the dht22 sensor. Note that the opengarage firmware references GPIO pins and not physical pins. You will have to go to wemos.cc to get a diagram of the pins and match them with GPIO pins.
+o For example, say you want to use pin D4 on the Wemos for DHT sensor, you will have to actually reference GPIO2 in the firmware.
+o So in order to use pin D4 add the following line to defines.h under GPIO pins, [#define DHTPIN 2] and [#define DHTTYPE DHT22]
+ I have attached the defines.h file with the necessary changes highlighted in purple.
+• Now open in the open garage library where you found defines.h, open main.cpp in notepad++ and make the following changes: please see the attached main.cpp file and note the changes highlighted in purple.
+
+Programming the Wemos D1 mini
+• First open the nodemcu flasher application
+o Open the nodemcu-flasher-master folder and choose either win32 for 32bit windows or win64 for 64 bit windows and open ESP8266Flasher.exe
+o Select your com port that your wemos d1 is connected to
+ You can find this port by going to windows device manager
+o Hit flash on the esp8266flasher and wait for the wemos d1 to program.
+• Now if you just want to use the firmware file I attached without making any pin changes you can go to config in the esp8266 flasher and hit the gear icon on the top line and select the firmware file (.bin) that I have posted. Then go back over to operation and hit flash.
+
+• If you want to make changes to the pins in defines.h or make any other changes to main.cpp etc you must compile the firmware with the Arduino IDE.
+o After making the changes to the files open the Arduino IDE and go to File | Examples | OpenGarage | mainArduino and then go to Sketch | Upload
+
+Your Wemos D1 should now be programmed, it will create an AP named OG_XXXX (with the x’s representing the Wemos mac address), connect to this network and follow directions to setup your open_garage.
+
+The files I mentioned can be downloaded from my google drive: Files
+
+If you decide to to use my firmware file without modifying the pins here is how i have them setup
+
+#define PIN_RELAY   5
+#define PIN_BUTTON  0
+#define PIN_TRIG   12
+#define PIN_ECHO   14
+#define PIN_LED     2
+#define PIN_RESET  16
+#define PIN_BUZZER 13
+#define DHTPIN      4
